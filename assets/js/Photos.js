@@ -39,9 +39,11 @@ export default class Photos {
   }
 
   setFiles() {
+    const hash = (location.hash || '').replace(/^\#/, '');
     let n = 0;
     this.files = this.q('a.file').filter((file, i) => {
       const visible = !file.classList.contains('hide');
+      if (file.id == hash) this.current = i;
       if (visible) file.dataset.index = n++;
       return visible;
     });
@@ -58,6 +60,7 @@ export default class Photos {
     const file = this.files[this.current];
     if (!file) return;
     file.classList.add('active');
+    file.focus();
     this.previewEl.querySelector('img').src = file.href;
     this.rotate(0);
 
@@ -66,13 +69,20 @@ export default class Photos {
 
     if (file.classList.contains('file-type-directory')) {
       const go = e.type == 'click' || e.code == 'Enter';
-      if (go) location.href = file.href;
+      if (go) return location.href = file.href;
     }
+
+    history.replaceState({}, document.title, '#' + file.id);
   }
 
   toggle(type, e) {
     e.preventDefault();
     document.querySelector('.type-' + type.href.replace(/.*#/, '')).classList.toggle('hide');
+  }
+
+  upDir() {
+    const upEl = document.querySelector('a.up');
+    if (upEl) upEl.click();
   }
 
   _onKey(e) {
@@ -81,6 +91,6 @@ export default class Photos {
     if (e.code == 'KeyX') return this.del();
     if (e.code == 'KeyR') return this.rotate(90);
     if (e.code == 'Enter') return this.show({add: 0}, e);
-    if (e.code == 'Backspace') return history.go(-1);
+    if (e.code == 'Backspace') return this.upDir();
   }
 }

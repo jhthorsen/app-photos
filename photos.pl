@@ -35,6 +35,7 @@ get '/*path' => {path => ''} => sub {
   $c->stash(vpath => $vpath);
   $c->stash(dpath => $c->photos->child(split '/', $vpath));
   $vpath->trailing_slash(1);
+  $vpath->leading_slash(1) if length($vpath) > 1;
 
   return render_dir($c)  if -d $c->stash('dpath');
   return render_file($c) if -e $c->stash('dpath');
@@ -62,8 +63,17 @@ sub render_dir {
     my $file = shift;
     my $name = $file->basename;
     my $type = (split '/', $c->mime_type($file))[0] || 'unknown';
+
+    my $id = join '_', $type, $name;
+    $id =~ s!\W!-!g;
+
     push @{$types{$type}},
-      {href => $vpath->clone->merge($name), name => $name, path => $file};
+      {
+      href => $vpath->clone->merge($name),
+      id   => $id,
+      name => $name,
+      path => $file
+      };
   });
 
   $c->render('dir', types => \%types);
@@ -88,7 +98,19 @@ __DATA__
 <body>
   <div class="container">
     <div class="browser">
-      <h1><%= $vpath %></h1>
+      <h1>
+        % my @path = @$vpath;
+        % my $i = 0;
+        %= link_to 'M:', '/', class => (@path <= 1 ? 'up' : '')
+        <span>/</span>
+        % while ($i < @path) {
+          % my @class = $i + 2 == @path ? 'up' : '';
+          %= link_to $path[$i], join('/', '', @path[0..$i]), class => @class;
+          % if (++$i < @path) {
+            <span>/</span>
+          % }
+        % }
+      </h1>
       % my $n = 0;
       % for my $type (sort keys %$types) {
         <h2>
@@ -99,7 +121,7 @@ __DATA__
           % for my $file (@{$types->{$type}}) {
             % my @cn = ('file', file_class_name $file->{path});
             % push @cn, 'active' if $n++ == 0;
-            <li><a class="<%= join ' ', @cn %>" href="<%= $file->{href} %>"><%= $file->{name} %></a></li>
+            <li><a id="<%= $file->{id} %>" class="<%= join ' ', @cn %>" href="<%= $file->{href} %>"><%= $file->{name} %></a></li>
           % }
         </ul>
         % }
