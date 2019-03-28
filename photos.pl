@@ -105,8 +105,8 @@ __DATA__
         % }
       </ul>
     </div>
-    <div class="preview">
-      <img src="" alt="">
+    <div class="preview rotate-0">
+      <img alt="Could not preview photo." src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII=">
     </div>
   </div>
   %= asset 'photos.js'

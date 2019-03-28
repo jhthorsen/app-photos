@@ -9,24 +9,16 @@ export default class Photos {
     if (file) fetch(file.href, {method: 'DELETE'});
   }
 
-  onKey(e) {
-    if (e.code == 'KeyJ') return this.show({add: 1}, e);
-    if (e.code == 'KeyK') return this.show({add: -1}, e);
-    if (e.code == 'KeyX') return this.del();
-    if (e.code == 'Enter') return this.show({add: 0}, e);
-    if (e.code == 'Backspace') return history.go(-1);
-  }
-
   q(sel) {
     return [].slice.call(document.querySelectorAll(sel));
   }
 
   mount(to) {
-    this.previewEl = to.querySelector('.preview img');
+    this.previewEl = to.querySelector('.preview');
     this.setFiles();
     this.show({add: 0});
 
-    document.addEventListener('keydown', (e) => this.onKey(e));
+    document.addEventListener('keydown', (e) => this._onKey(e));
 
     this.q('a.file').filter((fileEl) => {
       fileEl.addEventListener('click', (e) => this.show(fileEl, e));
@@ -35,6 +27,14 @@ export default class Photos {
     this.q('a.type').filter((typeEl) => {
       typeEl.addEventListener('click', (e) => this.toggle(typeEl, e));
     });
+  }
+
+  rotate(deg) {
+    const file = this.files[this.current];
+    if (!file.rotation) file.rotation = 0;
+    file.rotation += deg;
+    if (file.rotation >= 360) file.rotation = 0;
+    this.previewEl.className = this.previewEl.className.replace(/rotate-\d+/, 'rotate-' + file.rotation);
   }
 
   setFiles() {
@@ -57,7 +57,8 @@ export default class Photos {
     const file = this.files[this.current];
     if (!file) return;
     file.classList.add('active');
-    this.previewEl.src = file.href;
+    this.previewEl.querySelector('img').src = file.href;
+    this.rotate(0);
 
     if (file.classList.contains('file-type-directory')) {
       const go = e.type == 'click' || e.code == 'Enter';
@@ -68,5 +69,14 @@ export default class Photos {
   toggle(type, e) {
     e.preventDefault();
     document.querySelector('.type-' + type.href.replace(/.*#/, '')).classList.toggle('hide');
+  }
+
+  _onKey(e) {
+    if (e.code == 'KeyJ') return this.show({add: 1}, e);
+    if (e.code == 'KeyK') return this.show({add: -1}, e);
+    if (e.code == 'KeyX') return this.del();
+    if (e.code == 'KeyR') return this.rotate(90);
+    if (e.code == 'Enter') return this.show({add: 0}, e);
+    if (e.code == 'Backspace') return history.go(-1);
   }
 }
