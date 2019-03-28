@@ -17,7 +17,7 @@ export default class Photos {
   mount(to) {
     this.previewEl = to.querySelector('.preview');
     this.setFiles();
-    this.show({add: 0});
+    this.show({add: 0}, {});
 
     document.addEventListener('keydown', (e) => this._onKey(e));
 
@@ -48,7 +48,7 @@ export default class Photos {
   }
 
   show(params, e) {
-    if (e) e.preventDefault();
+    if (e.preventDefault) e.preventDefault();
     if (this.files[this.current]) this.files[this.current].classList.remove('active');
 
     this.current = params.hasOwnProperty('add') ? this.current + params.add : parseInt(params.dataset.index, 10) || 0;
