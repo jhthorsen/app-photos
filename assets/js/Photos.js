@@ -2,6 +2,7 @@ export default class Photos {
   constructor() {
     this.current = 0;
     this.files = [];
+    this.preloader = new Image();
   }
 
   del() {
@@ -59,6 +60,9 @@ export default class Photos {
     file.classList.add('active');
     this.previewEl.querySelector('img').src = file.href;
     this.rotate(0);
+
+    const nextFile = this.files[this.current + 1];
+    if (nextFile) this.preloader.src = nextFile.href;
 
     if (file.classList.contains('file-type-directory')) {
       const go = e.type == 'click' || e.code == 'Enter';
