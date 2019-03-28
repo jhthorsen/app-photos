@@ -14,9 +14,7 @@ app->plugin(Webpack => {process => [qw(js css sass)]});
 
 helper file_class_name => sub {
   my @type = split '/', (shift->mime_type(shift) || '');
-  return @type
-    ? sprintf 'file file-family-%s file-type-%s', @type
-    : 'file file-unknown';
+  return @type ? sprintf 'file-family-%s file-type-%s', @type : 'file-unknown';
 };
 
 helper mime_type => sub {
@@ -91,16 +89,19 @@ __DATA__
   <div class="container">
     <div class="browser">
       <h1><%= $vpath %></h1>
-      <ul class="browser_types">
-        % for my $type (sort keys %$types) {
-          <li>
-            <h2><%= ucfirst $type %></h2>
-            <ul class="browser_types_files">
-              % for my $file (@{$types->{$type}}) {
-                <li><a class="<%= file_class_name $file->{path} %>" href="<%= $file->{href} %>"><%= $file->{name} %></a></li>
-              % }
-            </ul>
-        </li>
+      % my $n = 0;
+      % for my $type (sort keys %$types) {
+        <h2>
+          <small>(<%= int @{$types->{$type}} %>)</small>
+          <a class="type" href="#<%= $type %>"><%= ucfirst $type %></a>
+        </h2>
+        <ul class="browser_files type-<%= $type %>">
+          % for my $file (@{$types->{$type}}) {
+            % my @cn = ('file', file_class_name $file->{path});
+            % push @cn, 'active' if $n++ == 0;
+            <li><a class="<%= join ' ', @cn %>" href="<%= $file->{href} %>"><%= $file->{name} %></a></li>
+          % }
+        </ul>
         % }
       </ul>
     </div>

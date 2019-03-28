@@ -1,6 +1,21 @@
+html,
+body,
+.preview {
+  background: $base-bg;
+}
+
 .container {
   display: flex;
   width: 100vw;
   height: 100vh;
   overflow: hidden;
+}
+
+.browser {
+  background: $browser-bg;
+  min-width: $browser-min-width;
+}
+
+.preview {
+  flex: 1 0 0;
 }
