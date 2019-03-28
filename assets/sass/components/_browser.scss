@@ -1,0 +1,40 @@
+.browser {
+  overflow: auto;
+}
+
+.browser ul,
+.browser li,
+.browser label,
+.browser a {
+  display: block;
+  margin: 0;
+  padding: 0;
+}
+
+.browser h1 {
+  background: #262626;
+  font-size: 3rem;
+  margin: 0;
+  padding: 1rem 1rem 0.5em 1rem;
+  position: sticky;
+  top: 0;
+}
+
+.browser label {
+  padding: 0.3rem 1rem;
+  cursor: pointer;
+}
+
+.browser_files a {
+  font-size: 0.9rem;
+  text-decoration: none;
+  padding: 0.3rem 1rem;
+}
+
+.browser_files a:hover {
+  background: #555;
+}
+
+.browser_files a.active {
+  background: #444;
+}
