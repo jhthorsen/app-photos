@@ -2,7 +2,7 @@ export default class Photos {
   constructor() {
     this.current = 0;
     this.files = [];
-    this.preloader = new Image();
+    this.preloader = [];
   }
 
   del() {
@@ -16,6 +16,7 @@ export default class Photos {
 
   mount(to) {
     this.previewEl = to.querySelector('.preview');
+    this.previewEl.querySelector('img').addEventListener('load', (e) => this.previewEl.classList.remove('loading'));
     this.setFiles();
     this.show({add: 0}, {});
 
@@ -34,6 +35,7 @@ export default class Photos {
     const file = this.files[this.current];
     if (!file.rotation) file.rotation = 0;
     file.rotation += deg;
+    if (file.rotation < 0) file.rotation = 270;
     if (file.rotation >= 360) file.rotation = 0;
     this.previewEl.className = this.previewEl.className.replace(/rotate-\d+/, 'rotate-' + file.rotation);
   }
@@ -62,10 +64,15 @@ export default class Photos {
     file.classList.add('active');
     file.focus();
     this.previewEl.querySelector('img').src = file.href;
+    this.previewEl.classList.add('loading');
     this.rotate(0);
 
     const nextFile = this.files[this.current + 1];
-    if (nextFile) this.preloader.src = nextFile.href;
+    if (nextFile) {
+      const img = new Image();
+      img.src = nextFile.href;
+      this.preloader.push(img);
+    }
 
     if (file.classList.contains('file-type-directory')) {
       const go = e.type == 'click' || e.code == 'Enter';
@@ -86,11 +93,11 @@ export default class Photos {
   }
 
   _onKey(e) {
-    if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+    if (e.altKey || e.ctrlKey || e.metaKey) return;
     if (e.code == 'KeyJ' || e.code == 'ArrowDown' || e.code == 'ArrowRight') return this.show({add: 1}, e);
     if (e.code == 'KeyK' || e.code == 'ArrowUp' || e.code == 'ArrowLeft') return this.show({add: -1}, e);
     if (e.code == 'KeyX') return this.del();
-    if (e.code == 'KeyR') return this.rotate(90);
+    if (e.code == 'KeyR') return this.rotate(e.shiftKey ? -90 : 90);
     if (e.code == 'Enter') return this.show({add: 0}, e);
     if (e.code == 'Backspace') return this.upDir();
   }

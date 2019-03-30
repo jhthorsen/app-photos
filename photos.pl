@@ -1,15 +1,21 @@
 #!/usr/bin/env perl
+# brew install libde265
+# brew install --with-libde265 imagemagick
 use Mojolicious::Lite;
 
-use Mojo::File 'path';
+use Mojo::File qw(path tempfile);
 
-$ENV{HOME}         ||= '.';
-$ENV{PHOTOS_DIR}   ||= path;
+$ENV{HOME}       ||= '.';
+$ENV{PHOTOS_DIR} ||= path $ENV{HOME};
+
 $ENV{PHOTOS_TRASH} ||= path $ENV{HOME}, '.Trash';
 mkdir $ENV{PHOTOS_TRASH} unless -d $ENV{PHOTOS_TRASH};
 
-# app->types->type(heic => 'image/heic');
-app->types->type(mov => 'video/quicktime');
+$ENV{PHOTOS_TEMP} ||= path(File::Spec->tmpdir, 'photos');
+mkdir $ENV{PHOTOS_TEMP} unless -d $ENV{PHOTOS_TEMP};
+
+app->types->type(heic => 'image/heic');
+app->types->type(mov  => 'video/quicktime');
 app->plugin(Webpack => {process => [qw(js css sass)]});
 
 helper file_class_name => sub {
@@ -80,12 +86,31 @@ sub render_dir {
 }
 
 sub render_file {
-  my $c     = shift;
+  my $c     = shift->render_later;
   my $dpath = $c->stash('dpath');
   my $type  = $c->mime_type($dpath);
 
-  $c->res->headers->content_type($type) if $type;
-  $c->reply->asset(Mojo::Asset::File->new(path => $dpath));
+  $c->res->headers->cache_control('max-age=600');
+
+  if ($dpath =~ m!\.heic$!i) {
+    my $temp = tempfile(DIR => $ENV{PHOTOS_TEMP}, SUFFIX => '.jpeg');
+    Mojo::IOLoop->subprocess(
+      sub {
+        my @cmd = (convert => $dpath => $temp);
+        $c->app->log->debug(join ' ', '$', @cmd);
+        return system @cmd;
+      },
+      sub {
+        $c->res->headers->content_type('image/jpeg');
+        $c->reply->asset(Mojo::Asset::File->new(path => $temp));
+        $c->tx->on(finish => sub { unlink $temp });
+      },
+    );
+  }
+  else {
+    $c->res->headers->content_type($type) if $type;
+    $c->reply->asset(Mojo::Asset::File->new(path => $dpath));
+  }
 }
 
 __DATA__
@@ -129,6 +154,7 @@ __DATA__
     </div>
     <div class="preview rotate-0">
       <img alt="Could not preview photo." src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII=">
+      <div class="preview_loader"><span class="one"></span><span class="two"></span><span class="three"></span></div>
     </div>
   </div>
   %= asset 'photos.js'
