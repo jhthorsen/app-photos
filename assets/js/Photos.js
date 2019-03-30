@@ -86,8 +86,9 @@ export default class Photos {
   }
 
   _onKey(e) {
-    if (e.code == 'KeyJ') return this.show({add: 1}, e);
-    if (e.code == 'KeyK') return this.show({add: -1}, e);
+    if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+    if (e.code == 'KeyJ' || e.code == 'ArrowDown' || e.code == 'ArrowRight') return this.show({add: 1}, e);
+    if (e.code == 'KeyK' || e.code == 'ArrowUp' || e.code == 'ArrowLeft') return this.show({add: -1}, e);
     if (e.code == 'KeyX') return this.del();
     if (e.code == 'KeyR') return this.rotate(90);
     if (e.code == 'Enter') return this.show({add: 0}, e);
