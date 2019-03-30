@@ -145,7 +145,6 @@ __DATA__
         <ul class="browser_files type-<%= $type %>">
           % for my $file (@{$types->{$type}}) {
             % my @cn = ('file', file_class_name $file->{path});
-            % push @cn, 'active' if $n++ == 0;
             <li><a id="<%= $file->{id} %>" class="<%= join ' ', @cn %>" href="<%= $file->{href} %>"><%= $file->{name} %></a></li>
           % }
         </ul>
