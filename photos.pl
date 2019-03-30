@@ -47,7 +47,7 @@ del '/*path' => {path => ''} => sub {
   my $vpath = Mojo::Path->new($c->stash('path'))->canonicalize;
   my $dpath => $c->thrash->child(split '/', $vpath);
 
-  rename $dpath, "$ENV{PHOTOS_TRASH}/$dpath";
+  #rename $dpath, "$ENV{PHOTOS_TRASH}/$dpath";
 
   $c->render(json => {path => $vpath});
 };
