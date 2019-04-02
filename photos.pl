@@ -15,6 +15,8 @@ app->types->type(heic => 'image/heic');
 app->types->type(mov  => 'video/quicktime');
 app->plugin(Webpack => {process => [qw(js css sass)]});
 
+helper downloads => sub { state $p = path $ENV{HOME}, 'Downloads' };
+
 helper file_class_name => sub {
   my @type = split '/', (shift->mime_type(shift) || '');
   return @type ? sprintf 'file-family-%s file-type-%s', @type : 'file-unknown';
@@ -44,7 +46,7 @@ get '/*path' => {path => ''} => sub {
   return $c->reply->not_found;
 };
 
-del '/*path' => {path => ''} => sub {
+del '/*path' => sub {
   my $c       = shift;
   my $vpath   = Mojo::Path->new($c->stash('path'))->canonicalize;
   my $dpath   = $c->photos->child(split '/', $vpath);
@@ -53,19 +55,28 @@ del '/*path' => {path => ''} => sub {
   # Undelete
   if ($vpath->[-1] =~ s!^del-!!) {
     $deleted = 0;
-    rename $dpath, $c->photos->child(split '/', $vpath);
+    rename $dpath, $c->photos->child(split '/', $vpath) or die "move: $!";
   }
 
   # Delete
   else {
     $vpath->[-1] = "del-$vpath->[-1]";
     $deleted = 1;
-    rename $dpath, $c->photos->child(split '/', $vpath);
+    rename $dpath, $c->photos->child(split '/', $vpath) or die "move: $!";
   }
 
   $vpath->leading_slash(1);
   $c->render(
     json => {deleted => $deleted, name => $vpath->[-1], path => $vpath});
+};
+
+post '/*path' => sub {
+  my $c     = shift;
+  my $vpath = Mojo::Path->new($c->stash('path'))->canonicalize;
+  my $dpath = $c->photos->child(split '/', $vpath);
+
+  rename $dpath, $c->downloads->child($vpath->[-1]) or die "move: $!";
+  $c->render(json => {deleted => 1, name => $vpath->[-1], path => $vpath});
 };
 
 app->start;

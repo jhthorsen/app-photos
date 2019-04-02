@@ -5,11 +5,11 @@ export default class Photos {
     this.preloader = [];
   }
 
-  del() {
+  del(method) {
     const file = this.files[this.current];
     if (!file) return;
 
-    fetch(file.href, {method: 'DELETE'}).then((res) => {
+    fetch(file.href, {method}).then((res) => {
       return res.json();
     }).then((json) => {
       file.classList[json.deleted ? 'add' : 'remove']('deleted');
@@ -106,7 +106,8 @@ export default class Photos {
     if (e.altKey || e.ctrlKey || e.metaKey) return;
     if (e.code == 'KeyJ' || e.code == 'ArrowDown' || e.code == 'ArrowRight') return this.show({add: 1}, e);
     if (e.code == 'KeyK' || e.code == 'ArrowUp' || e.code == 'ArrowLeft') return this.show({add: -1}, e);
-    if (e.code == 'KeyX') return this.del();
+    if (e.code == 'KeyX') return this.del('DELETE');
+    if (e.code == 'KeyC') return this.del('POST');
     if (e.code == 'KeyR') return this.rotate(e.shiftKey ? -90 : 90);
     if (e.code == 'Enter') return this.show({add: 0}, e);
     if (e.code == 'Backspace') return this.upDir();
