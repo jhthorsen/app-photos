@@ -79,7 +79,7 @@ export default class Photos {
       if (go) return location.href = file.href;
     }
 
-    history.replaceState({}, document.title, '#' + file.id);
+    if (e.type) history.replaceState({}, document.title, '#' + file.id);
   }
 
   toggle(type, e) {
