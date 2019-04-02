@@ -7,7 +7,16 @@ export default class Photos {
 
   del() {
     const file = this.files[this.current];
-    if (file) fetch(file.href, {method: 'DELETE'});
+    if (!file) return;
+
+    fetch(file.href, {method: 'DELETE'}).then((res) => {
+      return res.json();
+    }).then((json) => {
+      file.classList[json.deleted ? 'add' : 'remove']('deleted');
+      file.href = json.path;
+      file.textContent = json.name;
+      this.previewEl.classList[file.classList.contains('deleted') ? 'add' : 'remove']('deleted');
+    }).catch(err => console.error(err));
   }
 
   q(sel) {
@@ -65,6 +74,7 @@ export default class Photos {
     file.focus();
     this.previewEl.querySelector('img').src = file.href;
     this.previewEl.classList.add('loading');
+    this.previewEl.classList[file.classList.contains('deleted') ? 'add' : 'remove']('deleted');
     this.rotate(0);
 
     const nextFile = this.files[this.current + 1];

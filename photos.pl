@@ -8,9 +8,6 @@ use Mojo::File qw(path tempfile);
 $ENV{HOME}       ||= '.';
 $ENV{PHOTOS_DIR} ||= path $ENV{HOME};
 
-$ENV{PHOTOS_TRASH} ||= path $ENV{HOME}, '.Trash';
-mkdir $ENV{PHOTOS_TRASH} unless -d $ENV{PHOTOS_TRASH};
-
 $ENV{PHOTOS_TEMP} ||= path(File::Spec->tmpdir, 'photos');
 mkdir $ENV{PHOTOS_TEMP} unless -d $ENV{PHOTOS_TEMP};
 
@@ -32,7 +29,6 @@ helper mime_type => sub {
 };
 
 helper photos => sub { state $p = path $ENV{PHOTOS_DIR} };
-helper trash  => sub { state $p = path $ENV{PHOTOS_TRASH} };
 
 get '/*path' => {path => ''} => sub {
   my $c = shift;
@@ -49,13 +45,27 @@ get '/*path' => {path => ''} => sub {
 };
 
 del '/*path' => {path => ''} => sub {
-  my $c     = shift;
-  my $vpath = Mojo::Path->new($c->stash('path'))->canonicalize;
-  my $dpath => $c->thrash->child(split '/', $vpath);
+  my $c       = shift;
+  my $vpath   = Mojo::Path->new($c->stash('path'))->canonicalize;
+  my $dpath   = $c->photos->child(split '/', $vpath);
+  my $deleted = undef;
 
-  #rename $dpath, "$ENV{PHOTOS_TRASH}/$dpath";
+  # Undelete
+  if ($vpath->[-1] =~ s!^del-!!) {
+    $deleted = 0;
+    rename $dpath, $c->photos->child(split '/', $vpath);
+  }
 
-  $c->render(json => {path => $vpath});
+  # Delete
+  else {
+    $vpath->[-1] = "del-$vpath->[-1]";
+    $deleted = 1;
+    rename $dpath, $c->photos->child(split '/', $vpath);
+  }
+
+  $vpath->leading_slash(1);
+  $c->render(
+    json => {deleted => $deleted, name => $vpath->[-1], path => $vpath});
 };
 
 app->start;
@@ -75,10 +85,11 @@ sub render_dir {
 
     push @{$types{$type}},
       {
-      href => $vpath->clone->merge($name),
-      id   => $id,
-      name => $name,
-      path => $file
+      deleted => $name =~ m!\.del\.! ? 1 : 0,
+      href    => $vpath->clone->merge($name),
+      id      => $id,
+      name    => $name,
+      path    => $file
       };
   });
 
@@ -145,6 +156,7 @@ __DATA__
         <ul class="browser_files type-<%= $type %>">
           % for my $file (@{$types->{$type}}) {
             % my @cn = ('file', file_class_name $file->{path});
+            % push @cn, 'deleted' if $file->{deleted};
             <li><a id="<%= $file->{id} %>" class="<%= join ' ', @cn %>" href="<%= $file->{href} %>"><%= $file->{name} %></a></li>
           % }
         </ul>
